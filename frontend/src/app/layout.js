@@ -9,21 +9,26 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <nav className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">💊</span>
-            <span className="font-bold text-lg text-slate-800">PharmacyRx</span>
-          </div>
-          <div className="flex gap-4">
-            <a href="/" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
-              Prescriptions
-            </a>
-            <a href="/new" className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-              + New Prescription
-            </a>
+        <nav className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 px-5 py-4 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-lg text-white shadow-sm">Rx</span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Narayan Pharmacy Task</p>
+                <span className="font-semibold text-slate-900">Prescription Interaction Checker</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <a href="/" className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+                Prescriptions
+              </a>
+              <a href="/new" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800">
+                New Prescription
+              </a>
+            </div>
           </div>
         </nav>
-        <main className="max-w-5xl mx-auto px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
       </body>
     </html>
   );

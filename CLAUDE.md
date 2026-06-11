@@ -64,7 +64,7 @@ npm install && npm run dev
 
 - **API base:** `http://localhost:5000/api`
 - **Routes:** `GET /prescriptions`, `POST /prescriptions`, `GET /prescriptions/:id`
-- **Drug caching:** `drugCacheKey` field on Prescription stores sorted drug names — same combo reuses cached result, no re-call to Claude
+- **Drug caching:** `drugCacheKey` field on Prescription stores sorted drug name + dosage pairs — same combo reuses cached result, no re-call to Claude
 - **Single drug edge case:** If only 1 drug is entered, Claude is NOT called; a "no interaction" result is returned directly
 - **Severity values:** `"None" | "Mild" | "Moderate" | "Severe"` — validated in `claudeService.js`
 - **Claude model:** `claude-opus-4-5` — do not change without testing the JSON output format

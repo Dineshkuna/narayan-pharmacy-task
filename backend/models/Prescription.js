@@ -30,16 +30,20 @@ const PrescriptionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Pre-save: generate cache key from sorted drug names
+function buildDrugCacheKey(drugs = []) {
+  return drugs
+    .map((drug) => `${drug.name.toLowerCase().trim()}::${drug.dosage.toLowerCase().trim()}`)
+    .sort()
+    .join("|");
+}
+
 PrescriptionSchema.pre("save", function (next) {
   if (this.drugs && this.drugs.length > 0) {
-    const sorted = this.drugs
-      .map((d) => d.name.toLowerCase().trim())
-      .sort()
-      .join("|");
-    this.drugCacheKey = sorted;
+    this.drugCacheKey = buildDrugCacheKey(this.drugs);
   }
   next();
 });
+
+PrescriptionSchema.statics.buildDrugCacheKey = buildDrugCacheKey;
 
 module.exports = mongoose.model("Prescription", PrescriptionSchema);

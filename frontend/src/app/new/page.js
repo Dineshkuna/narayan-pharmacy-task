@@ -17,7 +17,9 @@ export default function NewPrescriptionPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [result, setResult] = useState(null);
+  const [savedPrescriptionId, setSavedPrescriptionId] = useState(null);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -45,7 +47,9 @@ export default function NewPrescriptionPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setNotice(null);
     setResult(null);
+    setSavedPrescriptionId(null);
 
     // Validate drugs
     const validDrugs = form.drugs.filter((d) => d.name.trim() && d.dosage.trim());
@@ -58,10 +62,9 @@ export default function NewPrescriptionPage() {
     try {
       const response = await createPrescription({ ...form, drugs: validDrugs });
       setResult(response.data.interactionResult);
-
-      // Redirect to list after 3 seconds if no severe interaction
-      if (response.data.interactionResult?.severity !== "Severe") {
-        setTimeout(() => router.push("/"), 3000);
+      setSavedPrescriptionId(response.data._id);
+      if (response.aiFallback) {
+        setNotice("AI service was unavailable, so the prescription was saved without an interaction check.");
       }
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -71,158 +74,154 @@ export default function NewPrescriptionPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">New Prescription</h1>
-        <p className="text-slate-500 text-sm mt-1">Enter prescription details. Claude AI will check for drug interactions on submit.</p>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Patient & Doctor */}
-          <div className="grid grid-cols-2 gap-4">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <section className="rounded-[2rem] border border-slate-200 bg-white/95 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)] md:p-8">
+        <div className="flex flex-col gap-4 border-b border-slate-100 pb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Screen 1</p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Patient Name *</label>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Prescription Entry Form</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Enter the patient, doctor, and medications. The app sends the prescription to Claude for a pharmacy-specific interaction check, then saves both the record and the AI result in MongoDB.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              View prescriptions
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="md:col-span-1">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Patient name *</label>
               <input
                 type="text"
                 required
                 value={form.patientName}
                 onChange={(e) => updateField("patientName", e.target.value)}
                 placeholder="e.g. Ravi Kumar"
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Doctor Name *</label>
+            <div className="md:col-span-1">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Doctor name *</label>
               <input
                 type="text"
                 required
                 value={form.doctorName}
                 onChange={(e) => updateField("doctorName", e.target.value)}
                 placeholder="e.g. Dr. Sharma"
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900"
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Date *</label>
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => updateField("date", e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Prescription Date *</label>
-            <input
-              type="date"
-              required
-              value={form.date}
-              onChange={(e) => updateField("date", e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Drug List */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-slate-700">
-                Medications * <span className="text-slate-400 font-normal">({form.drugs.length} added)</span>
-              </label>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Drug list *</label>
+                <p className="mt-1 text-xs text-slate-500">Add multiple rows in the form Drug Name + Dosage, such as Metformin 500mg.</p>
+              </div>
               <button
                 type="button"
                 onClick={addDrug}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
               >
-                + Add Drug
+                + Add row
               </button>
             </div>
 
             <div className="space-y-3">
               {form.drugs.map((drug, index) => (
-                <div key={index} className="flex gap-3 items-start">
-                  <div className="flex-1">
+                <div key={index} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3 md:grid-cols-[1fr_180px_auto] md:items-start">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Drug name</label>
                     <input
                       type="text"
                       value={drug.name}
                       onChange={(e) => updateDrug(index, "name", e.target.value)}
-                      placeholder="Drug name (e.g. Metformin)"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g. Metformin"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900"
                     />
                   </div>
-                  <div className="w-36">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Dosage</label>
                     <input
                       type="text"
                       value={drug.dosage}
                       onChange={(e) => updateDrug(index, "dosage", e.target.value)}
-                      placeholder="Dosage (e.g. 500mg)"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g. 500mg"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900"
                     />
                   </div>
-                  {form.drugs.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeDrug(index)}
-                      className="text-slate-400 hover:text-red-500 mt-2.5 flex-shrink-0 transition-colors"
-                    >
-                      ✕
-                    </button>
-                  )}
+                  <div className="flex items-end">
+                    {form.drugs.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => removeDrug(index)}
+                        className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <span className="px-4 py-3 text-xs text-slate-400">At least one medication row is required.</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
             {form.drugs.length < 2 && (
-              <p className="text-xs text-slate-400 mt-2">
-                💡 Add 2+ drugs to trigger the AI interaction check
-              </p>
+              <p className="mt-2 text-xs text-slate-500">Single drug prescriptions skip the Claude interaction call and save a no-interaction result.</p>
             )}
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-              ⚠ {error}
-            </div>
-          )}
+          {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">⚠ {error}</div>}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Checking drug interactions with Claude AI...
-              </>
-            ) : (
-              "Submit & Check Interactions"
-            )}
+            {loading ? "Checking drug interactions with Claude AI..." : "Save prescription and check interactions"}
           </button>
         </form>
-      </div>
+      </section>
 
-      {/* AI Result */}
       {result && (
-        <div className="mt-6">
+        <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
           <InteractionResult result={result} />
-          <p className="text-xs text-slate-400 text-center mt-3">
-            Prescription saved. {result.severity !== "Severe" ? "Redirecting to list..." : "Please review the severe interaction before dispensing."}
-          </p>
-          <div className="flex gap-3 mt-3">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+            <p>
+              Prescription saved to MongoDB{savedPrescriptionId ? ` (${savedPrescriptionId})` : ""}. {result.severity === "Severe" ? "Review immediately before dispensing." : "The interaction result is formatted and stored with the record."}
+            </p>
             <button
+              type="button"
               onClick={() => router.push("/")}
-              className="flex-1 border border-slate-300 text-slate-700 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors"
+              className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              View All Prescriptions
-            </button>
-            <button
-              onClick={() => { setResult(null); setForm({ patientName: "", doctorName: "", date: new Date().toISOString().split("T")[0], drugs: [{ ...emptyDrug }] }); }}
-              className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-            >
-              New Prescription
+              View list
             </button>
           </div>
-        </div>
+        </section>
       )}
+
+      {notice && <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{notice}</div>}
     </div>
   );
 }

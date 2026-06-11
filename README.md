@@ -1,8 +1,8 @@
 # narayan-pharmacy-task
 
-A Prescription Entry & Drug Interaction Checker — pharmacists enter prescriptions and Claude AI flags dangerous drug combinations before dispensing.
+A focused Prescription Entry & Drug Interaction Checker. Pharmacists enter a prescription, Claude AI reviews the drug combination before dispensing, and the result is saved in MongoDB for later review.
 
-**Stack:** Node.js + Express · MongoDB · Next.js · Claude API
+**Stack:** Node.js + Express · MongoDB via Mongoose · Next.js 14 · Claude API
 
 ---
 
@@ -63,6 +63,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 - **Smart Caching** — same drug combination reuses cached result (no duplicate API calls)
 - **Prescriptions List** — table with severity badges; click any row for full details
 - **Edge Case Handling** — single drug skips AI call; API errors shown in UI (not just console)
+- **MongoDB Storage** — prescriptions and interaction results are persisted in Mongoose documents
 
 ---
 

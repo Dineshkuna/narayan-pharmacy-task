@@ -1,6 +1,17 @@
 const Anthropic = require("@anthropic-ai/sdk");
+const dotenv = require("dotenv");
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function createAnthropicClient() {
+  // Reload local env changes so an updated API key is picked up without restarting the server.
+  dotenv.config({ override: true });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing ANTHROPIC_API_KEY");
+  }
+
+  return new Anthropic({ apiKey });
+}
 
 /**
  * Checks drug-drug interactions using Claude AI.
@@ -16,6 +27,8 @@ async function checkDrugInteractions(drugs) {
       recommendations: ["Single medication — no interaction risk identified."],
     };
   }
+
+  const client = createAnthropicClient();
 
   const drugList = drugs
     .map((d, i) => `${i + 1}. ${d.name} ${d.dosage}`)

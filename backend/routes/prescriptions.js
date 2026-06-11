@@ -3,6 +3,15 @@ const router = express.Router();
 const Prescription = require("../models/Prescription");
 const { checkDrugInteractions } = require("../services/claudeService");
 
+function buildFallbackInteractionResult() {
+  return {
+    summary: "AI service temporarily unavailable. Prescription saved without interaction check.",
+    severity: "None",
+    details: [],
+    recommendations: ["Recheck interactions once the AI service is available again."],
+  };
+}
+
 // GET /api/prescriptions — list all prescriptions
 router.get("/", async (req, res) => {
   try {
@@ -55,13 +64,11 @@ router.post("/", async (req, res) => {
     }
 
     // Generate cache key for this drug combination
-    const cacheKey = drugs
-      .map((d) => d.name.toLowerCase().trim())
-      .sort()
-      .join("|");
+    const cacheKey = Prescription.buildDrugCacheKey(drugs);
 
     // Check DB cache — if same drug combo was already checked, reuse result
     let interactionResult = null;
+    let aiFallback = false;
     const cached = await Prescription.findOne({
       drugCacheKey: cacheKey,
       interactionResult: { $ne: null },
@@ -73,7 +80,23 @@ router.post("/", async (req, res) => {
     } else {
       // Call Claude API
       console.log("🤖 Calling Claude for drug interaction check...");
-      interactionResult = await checkDrugInteractions(drugs);
+      try {
+        interactionResult = await checkDrugInteractions(drugs);
+      } catch (err) {
+        const isClaudeFailure =
+          err.name === "APIError" ||
+          err.status ||
+          err.name === "SyntaxError" ||
+          err.message === "Missing ANTHROPIC_API_KEY";
+
+        if (!isClaudeFailure) {
+          throw err;
+        }
+
+        aiFallback = true;
+        interactionResult = buildFallbackInteractionResult();
+        console.warn("⚠️ Claude check failed, saving with fallback result:", err.message || err);
+      }
     }
 
     // Save prescription to DB
@@ -91,24 +114,10 @@ router.post("/", async (req, res) => {
       success: true,
       data: prescription,
       cached: !!cached,
+      aiFallback,
     });
   } catch (err) {
     console.error("Create prescription error:", err);
-
-    // Handle Claude API errors gracefully
-    if (err.name === "APIError" || err.status) {
-      return res.status(502).json({
-        success: false,
-        error: "AI service temporarily unavailable. Prescription saved without interaction check.",
-      });
-    }
-
-    if (err.name === "SyntaxError") {
-      return res.status(500).json({
-        success: false,
-        error: "Failed to parse AI response. Please try again.",
-      });
-    }
 
     res.status(500).json({ success: false, error: "Failed to create prescription" });
   }

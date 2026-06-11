@@ -14,81 +14,80 @@ export default async function PrescriptionsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Prescriptions</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {prescriptions.length > 0
-              ? `${prescriptions.length} prescription${prescriptions.length !== 1 ? "s" : ""} on record`
-              : "No prescriptions yet"}
-          </p>
+    <div className="space-y-6">
+      <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Screen 2</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Prescriptions List</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Saved prescriptions appear here with the patient, date, and drug count. Open any row to review the AI interaction result and severity.
+            </p>
+          </div>
+          <Link
+            href="/new"
+            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+          >
+            + New Prescription
+          </Link>
         </div>
-        <Link
-          href="/new"
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
-        >
-          + New Prescription
-        </Link>
-      </div>
+      </section>
 
       {fetchError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-sm text-red-700 mb-6">
-          ⚠ {fetchError}
-        </div>
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">⚠ {fetchError}</div>
       )}
 
       {!fetchError && prescriptions.length === 0 && (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
-          <div className="text-5xl mb-4">💊</div>
-          <p className="text-slate-500 text-sm">No prescriptions yet. Create your first one!</p>
-          <Link href="/new" className="inline-block mt-4 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+        <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+          <p className="text-sm font-medium text-slate-500">No prescriptions yet.</p>
+          <p className="mt-2 text-slate-700">Create the first prescription to start checking interactions.</p>
+          <Link href="/new" className="mt-5 inline-flex rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800">
             + New Prescription
           </Link>
         </div>
       )}
 
       {prescriptions.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600">Patient</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600">Doctor</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600">Date</th>
-                <th className="text-center px-5 py-3.5 font-semibold text-slate-600">Drugs</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600">Interaction</th>
-                <th className="px-5 py-3.5"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {prescriptions.map((rx) => (
-                <tr key={rx._id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-5 py-4 font-medium text-slate-800">{rx.patientName}</td>
-                  <td className="px-5 py-4 text-slate-600">{rx.doctorName}</td>
-                  <td className="px-5 py-4 text-slate-500">
-                    {new Date(rx.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                  </td>
-                  <td className="px-5 py-4 text-center">
-                    <span className="bg-blue-100 text-blue-700 rounded-full px-2.5 py-1 text-xs font-semibold">
-                      {rx.drugCount}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <SeverityBadge severity={rx.severity} />
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <Link
-                      href={`/prescriptions/${rx._id}`}
-                      className="text-blue-600 hover:text-blue-700 font-medium text-xs"
-                    >
-                      View →
-                    </Link>
-                  </td>
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/90 text-slate-500">
+                  <th className="px-5 py-4 text-left font-semibold uppercase tracking-[0.18em]">Patient</th>
+                  <th className="px-5 py-4 text-left font-semibold uppercase tracking-[0.18em]">Date</th>
+                  <th className="px-5 py-4 text-left font-semibold uppercase tracking-[0.18em]">Drug Count</th>
+                  <th className="px-5 py-4 text-left font-semibold uppercase tracking-[0.18em]">Severity</th>
+                  <th className="px-5 py-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {prescriptions.map((rx) => (
+                  <tr key={rx._id} className="group transition-colors hover:bg-slate-50/80">
+                    <td className="px-5 py-4">
+                      <div className="font-medium text-slate-900">{rx.patientName}</div>
+                      <div className="mt-1 text-xs text-slate-500">Click to view the full prescription details</div>
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {new Date(rx.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                        {rx.drugCount} drug{rx.drugCount !== 1 ? "s" : ""}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <SeverityBadge severity={rx.severity} />
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <Link href={`/prescriptions/${rx._id}`} className="text-sm font-semibold text-slate-900 transition-colors group-hover:text-slate-600">
+                        View details →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
