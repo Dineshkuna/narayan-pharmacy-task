@@ -1,66 +1,17 @@
-require("dotenv").config();
+require("dotenv").config({ override: true });
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
-const dns = require("dns").promises;
-const { URL } = require("url");
+const { connectMongoDatabase } = require("./config/db");
 
 const prescriptionRoutes = require("./routes/prescriptions");
 
 const app = express();
-const primaryMongoUri = process.env.RENDER_MONGODB_URI || process.env.MONGODB_URI;
-
-function isLocalMongoUri(uri) {
-  return Boolean(uri) && /mongodb:\/\/(localhost|127\.0\.0\.1|::1)/i.test(uri);
-}
 
 const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-async function normalizeMongoUri(uri) {
-  if (!uri || !uri.startsWith("mongodb+srv://")) {
-    return uri;
-  }
-
-  const parsed = new URL(uri);
-  const serviceName = parsed.hostname;
-  const srvRecords = await dns.resolveSrv(`_mongodb._tcp.${serviceName}`);
-  const hosts = srvRecords.map((record) => `${record.name}:${record.port}`).join(",");
-
-  const query = new URLSearchParams(parsed.search);
-
-  try {
-    const txtRecords = await dns.resolveTxt(`_mongodb._tcp.${serviceName}`);
-    const txtString = txtRecords.flat().join("");
-    if (txtString) {
-      const txtParams = new URLSearchParams(txtString);
-      for (const [key, value] of txtParams.entries()) {
-        if (!query.has(key)) {
-          query.set(key, value);
-        }
-      }
-    }
-  } catch (err) {
-    // TXT records are optional; continue with the direct seed list if they are unavailable.
-  }
-
-  if (!query.has("tls") && !query.has("ssl")) {
-    query.set("tls", "true");
-  }
-
-  if (!query.has("authSource")) {
-    query.set("authSource", "admin");
-  }
-
-  const username = parsed.username ? encodeURIComponent(decodeURIComponent(parsed.username)) : "";
-  const password = parsed.password ? encodeURIComponent(decodeURIComponent(parsed.password)) : "";
-  const authPart = username ? `${username}:${password}@` : "";
-  const pathPart = parsed.pathname && parsed.pathname !== "/" ? parsed.pathname : "/";
-
-  return `mongodb://${authPart}${hosts}${pathPart}?${query.toString()}`;
-}
 
 app.use(
   cors({
@@ -80,26 +31,10 @@ app.get("/api/health", (req, res) => {
 
 async function startServer() {
   try {
-    if (!primaryMongoUri) {
-      throw new Error("Missing MongoDB URI. Set RENDER_MONGODB_URI for Render or MONGODB_URI for local development.");
-    }
-
-    if (isLocalMongoUri(primaryMongoUri)) {
-      throw new Error(
-        "MongoDB URI is pointing to localhost. Set RENDER_MONGODB_URI to your Atlas connection string on Render."
-      );
-    }
-
-    const normalizedMongoUri = await normalizeMongoUri(primaryMongoUri);
-    await mongoose.connect(normalizedMongoUri);
+    await connectMongoDatabase();
     console.log("✅ Connected to MongoDB");
   } catch (primaryErr) {
-    const baseMessage = primaryErr && primaryErr.message ? primaryErr.message : String(primaryErr);
-    const whitelistHint = /whitelist|IP|ECONNREFUSED|server selection/i.test(baseMessage)
-      ? " Check MongoDB Atlas Network Access and allow the Render deployment IP range, or temporarily allow 0.0.0.0/0 for testing."
-      : "";
-
-    console.error("Mongo Error:", primaryErr);
+    console.error("Mongo Error:", primaryErr.message || primaryErr);
     process.exit(1);
   }
 
