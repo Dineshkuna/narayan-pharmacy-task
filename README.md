@@ -69,6 +69,8 @@ Use these settings:
 2. In the Vercel project settings, set `NEXT_PUBLIC_API_URL` to your Render backend URL, for example `https://your-backend.onrender.com`.
 3. On Render, create a Web Service from the same repo and set the Root Directory to `backend`.
 4. In the Render service environment variables, set `MONGODB_URI`, `ANTHROPIC_API_KEY`, and `FRONTEND_URL`.
+	- `MONGODB_URI` must be your Atlas connection string. Do not use `mongodb://localhost...` or `127.0.0.1` on Render.
+	- If the service still fails with a localhost error, open the Render dashboard and replace the current `MONGODB_URI` value with the Atlas URI from MongoDB Atlas.
 5. Set `FRONTEND_URL` to your Vercel domain, for example `https://your-frontend.vercel.app`.
 6. Use `npm start` as the Render start command.
 
