@@ -6,15 +6,16 @@ import { createPrescription } from "../../lib/api";
 import InteractionResult from "../../components/InteractionResult";
 
 const emptyDrug = { name: "", dosage: "" };
+const createEmptyForm = () => ({
+  patientName: "",
+  doctorName: "",
+  date: new Date().toISOString().split("T")[0],
+  drugs: [{ ...emptyDrug }],
+});
 
 export default function NewPrescriptionPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    patientName: "",
-    doctorName: "",
-    date: new Date().toISOString().split("T")[0],
-    drugs: [{ ...emptyDrug }],
-  });
+  const [form, setForm] = useState(createEmptyForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
@@ -63,6 +64,7 @@ export default function NewPrescriptionPage() {
       const response = await createPrescription({ ...form, drugs: validDrugs });
       setResult(response.data.interactionResult);
       setSavedPrescriptionId(response.data._id);
+      setForm(createEmptyForm());
       if (response.aiFallback) {
         setNotice("AI service was unavailable, so the prescription was saved without an interaction check.");
       }
@@ -148,7 +150,7 @@ export default function NewPrescriptionPage() {
 
             <div className="space-y-3">
               {form.drugs.map((drug, index) => (
-                <div key={index} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3 md:grid-cols-[1fr_180px_auto] md:items-start">
+                <div key={index} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3 md:grid-cols-[minmax(0,1fr)_180px_auto] md:items-end">
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Drug name</label>
                     <input
@@ -169,7 +171,7 @@ export default function NewPrescriptionPage() {
                       className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900"
                     />
                   </div>
-                  <div className="flex items-end">
+                  <div className="flex items-end md:justify-end">
                     {form.drugs.length > 1 ? (
                       <button
                         type="button"
