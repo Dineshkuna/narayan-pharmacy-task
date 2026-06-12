@@ -10,6 +10,10 @@ const prescriptionRoutes = require("./routes/prescriptions");
 const app = express();
 const primaryMongoUri = process.env.MONGODB_URI;
 
+function isLocalMongoUri(uri) {
+  return Boolean(uri) && /mongodb:\/\/(localhost|127\.0\.0\.1|::1)/i.test(uri);
+}
+
 const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
   .split(",")
   .map((origin) => origin.trim())
@@ -77,7 +81,13 @@ app.get("/api/health", (req, res) => {
 async function startServer() {
   try {
     if (!primaryMongoUri) {
-      throw new Error("Missing MONGODB_URI");
+      throw new Error("Missing MONGODB_URI. Set it in the Render service environment variables.");
+    }
+
+    if (isLocalMongoUri(primaryMongoUri)) {
+      throw new Error(
+        "MONGODB_URI is pointing to localhost. Render must use your Atlas connection string, not a local MongoDB URL."
+      );
     }
 
     const normalizedMongoUri = await normalizeMongoUri(primaryMongoUri);
