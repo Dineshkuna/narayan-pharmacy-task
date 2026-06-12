@@ -8,7 +8,7 @@ const { URL } = require("url");
 const prescriptionRoutes = require("./routes/prescriptions");
 
 const app = express();
-const primaryMongoUri = process.env.MONGODB_URI;
+const primaryMongoUri = process.env.RENDER_MONGODB_URI || process.env.MONGODB_URI;
 
 function isLocalMongoUri(uri) {
   return Boolean(uri) && /mongodb:\/\/(localhost|127\.0\.0\.1|::1)/i.test(uri);
@@ -81,12 +81,12 @@ app.get("/api/health", (req, res) => {
 async function startServer() {
   try {
     if (!primaryMongoUri) {
-      throw new Error("Missing MONGODB_URI. Set it in the Render service environment variables.");
+      throw new Error("Missing MongoDB URI. Set RENDER_MONGODB_URI for Render or MONGODB_URI for local development.");
     }
 
     if (isLocalMongoUri(primaryMongoUri)) {
       throw new Error(
-        "MONGODB_URI is pointing to localhost. Render must use your Atlas connection string, not a local MongoDB URL."
+        "MongoDB URI is pointing to localhost. Set RENDER_MONGODB_URI to your Atlas connection string on Render."
       );
     }
 
@@ -94,7 +94,12 @@ async function startServer() {
     await mongoose.connect(normalizedMongoUri);
     console.log("✅ Connected to MongoDB");
   } catch (primaryErr) {
-    console.error("❌ Primary MongoDB connection failed:", primaryErr.message);
+    const baseMessage = primaryErr && primaryErr.message ? primaryErr.message : String(primaryErr);
+    const whitelistHint = /whitelist|IP|ECONNREFUSED|server selection/i.test(baseMessage)
+      ? " Check MongoDB Atlas Network Access and allow the Render deployment IP range, or temporarily allow 0.0.0.0/0 for testing."
+      : "";
+
+    console.error("Mongo Error:", primaryErr);
     process.exit(1);
   }
 
