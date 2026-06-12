@@ -7,7 +7,17 @@ const prescriptionRoutes = require("./routes/prescriptions");
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3000" }));
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Routes

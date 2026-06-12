@@ -56,6 +56,26 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 
 ---
 
+## Deployment Setup
+
+This repo is already organized for two separate deployments from the same GitHub repository:
+
+- `frontend/` deploys to Vercel
+- `backend/` deploys to Render
+
+Use these settings:
+
+1. On Vercel, create a new project from the repo and set the Root Directory to `frontend`.
+2. In the Vercel project settings, set `NEXT_PUBLIC_API_URL` to your Render backend URL, for example `https://your-backend.onrender.com`.
+3. On Render, create a Web Service from the same repo and set the Root Directory to `backend`.
+4. In the Render service environment variables, set `MONGODB_URI`, `ANTHROPIC_API_KEY`, and `FRONTEND_URL`.
+5. Set `FRONTEND_URL` to your Vercel domain, for example `https://your-frontend.vercel.app`.
+6. Use `npm start` as the Render start command.
+
+If you want to allow multiple frontend origins, separate them with commas in `FRONTEND_URL`.
+
+---
+
 ## Features
 
 - **Prescription Entry Form** — patient, doctor, date, multiple drugs + dosages
