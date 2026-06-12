@@ -1,6 +1,27 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const dotenv = require("dotenv");
 
+function stripUrls(text) {
+  return String(text || "")
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/www\.\S+/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function sanitizeInteractionResult(result) {
+  if (!result) return result;
+
+  return {
+    ...result,
+    summary: stripUrls(result.summary),
+    details: Array.isArray(result.details) ? result.details.map(stripUrls).filter(Boolean) : [],
+    recommendations: Array.isArray(result.recommendations)
+      ? result.recommendations.map(stripUrls).filter(Boolean)
+      : [],
+  };
+}
+
 function createAnthropicClient() {
   // Reload local env changes so an updated API key is picked up without restarting the server.
   dotenv.config({ override: true });
@@ -80,7 +101,7 @@ Be specific to the actual drug names and dosages provided. This is for a license
     parsed.severity = "None";
   }
 
-  return parsed;
+  return sanitizeInteractionResult(parsed);
 }
 
-module.exports = { checkDrugInteractions };
+module.exports = { checkDrugInteractions, sanitizeInteractionResult };

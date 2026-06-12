@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Prescription = require("../models/Prescription");
-const { checkDrugInteractions } = require("../services/claudeService");
+const { checkDrugInteractions, sanitizeInteractionResult } = require("../services/claudeService");
 
 function buildFallbackInteractionResult() {
   return {
@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
     }).select("interactionResult");
 
     if (cached) {
-      interactionResult = cached.interactionResult;
+      interactionResult = sanitizeInteractionResult(cached.interactionResult);
       console.log("✅ Cache hit — reusing interaction result for:", cacheKey);
     } else {
       // Call Claude API
@@ -94,7 +94,7 @@ router.post("/", async (req, res) => {
         }
 
         aiFallback = true;
-        interactionResult = buildFallbackInteractionResult();
+        interactionResult = sanitizeInteractionResult(buildFallbackInteractionResult());
         console.warn("⚠️ Claude check failed, saving with fallback result:", err.message || err);
       }
     }
