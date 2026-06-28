@@ -21,7 +21,7 @@ export default async function PrescriptionsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Screen 2</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Prescriptions List</h1>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Saved prescriptions appear here with the patient, date, and drug count. Open any row to review the AI interaction result and severity.
+              Access a complete history of saved prescriptions along with patient details, prescription date, prescribed medications, and AI-generated analysis. Click on any record to review drug interactions, severity levels, potential risks, clinical recommendations, and the full evaluation report.
             </p>
           </div>
           <Link
